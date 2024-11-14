@@ -79,9 +79,9 @@ public class Vec3 {
 
     public static Vec3 lerp (Vec3 a, Vec3 b, float t) {
         return new Vec3(
-                a.x * t + b.x * (1 - t),
-                a.y * t + b.y * (1 - t),
-                a.z * t + b.z * (1 - t)
+                a.x * t + b.x * (1f - t),
+                a.y * t + b.y * (1f - t),
+                a.z * t + b.z * (1f - t)
         );
     }
 }

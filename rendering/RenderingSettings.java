@@ -1,8 +1,7 @@
 package rendering;
 
-import math.Vec3;
-
 public class RenderingSettings {
+    public static int DENOISE_KERNEL_SIZE = 9;
     public static int THREAD_COUNT = 36;
 
     public static int RESOLUTION_SCALING = 16;
@@ -10,13 +9,12 @@ public class RenderingSettings {
 
     public static float EXPOSURE = 1f;
 
-    public static int LIGHT_SAMPLES = 16;
-    public static float ROUGHNESS = 1;
+    public static int LIGHT_SAMPLES = 4;
+    public static int REFLECTION_SAMPLES = 4;
+    public static float ROUGHNESS = 0.5f;
 
     public static final int ITERATIONS = 1000;
 
     public static float COLLISION_THRESHOLD = 0.00001f;
     public static float OUT_OF_BOUNDS = 1000f;
-
-    public static final Vec3 WORLD = new Vec3(0f);
 }

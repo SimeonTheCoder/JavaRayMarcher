@@ -39,9 +39,6 @@ public class RenderThread extends Thread{
     public void run() {
         for (int i = startY; i < endY; i ++) {
             for (int j = startX; j < endX; j ++) {
-//                if(RenderingSettings.RESOLUTION_SCALING != 1 && ThreadLocalRandom.current().nextFloat() > 0.03f * RenderingSettings.RESOLUTION_SCALING) continue;
-//                if(RenderingSettings.RESOLUTION_SCALING == 1 && ThreadLocalRandom.current().nextFloat() > 0.1f) continue;
-
                 float x = (j + 0f) / height;
                 float y = 1 - (i + 0f) / height;
 
@@ -52,9 +49,11 @@ public class RenderThread extends Thread{
                 );
 
                 //Set current pixel color
-                Vec3 frag = renderer.render(curr, RenderingSettings.BOUNCES - 1, 1f).scale(RenderingSettings.EXPOSURE);
+                Vec3 frag = renderer.render(curr, RenderingSettings.BOUNCES - 1, 1f).color.scale(RenderingSettings.EXPOSURE);
 
-                frag = frag.scale(1 + frag.length());
+//                frag = frag.scale(0.2f);
+                frag = frag.scale(1f / (1f + frag.length()));
+                frag = frag.scale(2);
 
                 frag = Vec3.lerp(frag, new Vec3((frag.x + frag.y + frag.z) / 3f), 1 - Math.min(1, Math.max(0, (frag.x + frag.y + frag.z) / 3f)));
 
@@ -64,6 +63,8 @@ public class RenderThread extends Thread{
 
                 if(j < image.getWidth() && i < image.getHeight()) image.setRGB(j, i, (currRed << 16) | (currGreen << 8) | currBlue);
             }
+
+            renderer.generateRandomValues();
         }
     }
 }

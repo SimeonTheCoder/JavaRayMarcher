@@ -4,6 +4,8 @@ public class Ray {
     public Vec3 position;
     public Vec3 direction;
 
+    public Vec3 color;
+
     public float distanceTravelled;
 
     public Ray() {

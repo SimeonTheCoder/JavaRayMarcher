@@ -1,17 +1,19 @@
-import math.Light;
 import math.Vec3;
 import rendering.Renderer;
 import rendering.Window;
 import scene.Scene;
-import scene.primitives.Ground;
 import scene.primitives.Sphere;
 
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
 import java.util.Random;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         //Create scene
         Scene scene = new Scene();
+        scene.hdri = ImageIO.read(new File("venice_sunset_4k.png"));
 
         Random random = new Random();
 
@@ -66,41 +68,41 @@ public class Main {
 //                )
 //        );
 //
-        scene.lights.add(
-                new Light(
-                        new Vec3(-3f, 4f, 10f),
-                        50f,
-                        new Vec3(1, 0, 0),
-                        .5f
-                )
-        );
-
-        scene.lights.add(
-                new Light(
-                        new Vec3(3f, 4f, 10f),
-                        5f,
-                        new Vec3(0, 0, 1),
-                        .5f
-                )
-        );
-
-        scene.lights.add(
-                new Light(
-                        new Vec3(0f, 3f, 12f),
-                        5f,
-                        new Vec3(0, 1, 0),
-                        .5f
-                )
-        );
-
-        scene.lights.add(
-                new Light(
-                        new Vec3(0f, 3f, 8f),
-                        5f,
-                        new Vec3(1, 0, 1),
-                        .5f
-                )
-        );
+//        scene.lights.add(
+//                new Light(
+//                        new Vec3(-3f, 4f, 10f),
+//                        50f,
+//                        new Vec3(1, 0, 0),
+//                        .5f
+//                )
+//        );
+//
+//        scene.lights.add(
+//                new Light(
+//                        new Vec3(3f, 4f, 10f),
+//                        5f,
+//                        new Vec3(0, 0, 1),
+//                        .5f
+//                )
+//        );
+//
+//        scene.lights.add(
+//                new Light(
+//                        new Vec3(0f, 3f, 12f),
+//                        5f,
+//                        new Vec3(0, 1, 0),
+//                        .5f
+//                )
+//        );
+//
+//        scene.lights.add(
+//                new Light(
+//                        new Vec3(0f, 3f, 8f),
+//                        5f,
+//                        new Vec3(1, 0, 1),
+//                        .5f
+//                )
+//        );
 
 //        scene.lights.add(
 //                new Light(
@@ -129,12 +131,12 @@ public class Main {
 //                )
 //        );
 
-        scene.objects.add(
-                new Ground(0)
-        );
+//        scene.objects.add(
+//                new Ground(0)
+//        );
 
 //        scene.objects.add(
-//                new Ground(6, true)
+//                new Ground(20, true)
 //        );
 
 //        scene.objects.add(

@@ -12,6 +12,7 @@ import java.util.Random;
 
 public class Window extends JPanel {
     public boolean blocked = false;
+    private boolean renderComplete = false;
 
     private Vec3 playerCam = new Vec3(2.3999996f, 2.5999997f, 0);
 
@@ -97,10 +98,10 @@ public class Window extends JPanel {
 
             for(int i = 0; i < copy.getWidth(); i += 2) {
                 for(int j = 0; j < copy.getHeight(); j += 2) {
-                    copy.setRGB(i, j, image.getRGB(i / 2, j / 2));
-                    copy.setRGB(i + 1, j, image.getRGB(i / 2, j / 2));
-                    copy.setRGB(i, j + 1, image.getRGB(i / 2, j / 2));
-                    copy.setRGB(i + 1, j + 1, image.getRGB(i / 2, j / 2));
+                    copy.setRGB(i, j, image.getRGB(i >> 1, j >> 1));
+                    copy.setRGB(i + 1, j, image.getRGB(i >> 1, j >> 1));
+                    copy.setRGB(i, j + 1, image.getRGB(i >> 1, j >> 1));
+                    copy.setRGB(i + 1, j + 1, image.getRGB(i >> 1, j >> 1));
                 }
             }
 
@@ -110,10 +111,10 @@ public class Window extends JPanel {
             int w = this.width / RenderingSettings.RESOLUTION_SCALING;
 
             for(int i = 0; i < RenderingSettings.THREAD_COUNT; i ++) {
-                int tileX = i % 5;
-                int tileY = i / 5;
+                int tileX = i % 6;
+                int tileY = i / 6;
 
-                threads[i] = new RenderThread(image, renderer, tileX * w / 5, tileY * h / 5, (tileX + 1) * w / 5, (tileY + 1) * h / 5, playerCam, h);
+                threads[i] = new RenderThread(image, renderer.clone(), tileX * w / 6, tileY * h / 6, (tileX + 1) * w / 6, (tileY + 1) * h / 6, playerCam, h);
 
 //                threads[i] = new RenderThread(image, renderer, i * w / RenderingSettings.THREAD_COUNT, 0, (i + 1) * w / RenderingSettings.THREAD_COUNT, h, random, playerCam);
                 threads[i].start();
@@ -134,7 +135,27 @@ public class Window extends JPanel {
 
         super.paint(g);
 
+        if(!blocked) {
+            boolean done = true;
+
+            for (RenderThread thread : threads) {
+                if (thread != null && thread.isAlive()) {
+                    done = false;
+                    break;
+                }
+            }
+
+            if (done && !renderComplete && RenderingSettings.RESOLUTION_SCALING == 1) {
+                //denoise
+                image = Denoiser.denoise(image);
+
+                renderComplete = true;
+            }
+        }
+
         if(blocked) {
+            renderComplete = false;
+
             for (int i = 0; i < h; i++) {
                 for (int j = 0; j < w; j++) {
                     if (RenderingSettings.RESOLUTION_SCALING != 1 && random.nextFloat() > 0.03f * RenderingSettings.RESOLUTION_SCALING)
@@ -151,7 +172,7 @@ public class Window extends JPanel {
                     );
 
                     //Set current pixel color
-                    Vec3 frag = renderer.render(curr, RenderingSettings.BOUNCES - 2, 0.1f).scale(RenderingSettings.EXPOSURE);
+                    Vec3 frag = renderer.render(curr, RenderingSettings.BOUNCES - 2, 0.1f).color.scale(RenderingSettings.EXPOSURE);
 
                     frag = frag.scale(1 + frag.length());
 
