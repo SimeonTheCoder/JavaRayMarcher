@@ -33,6 +33,13 @@ public class Vec2 {
         );
     }
 
+    public Vec2 scaleInPlace (math.Vec2 other) {
+        this.x *= other.x;
+        this.y *= other.y;
+
+        return this;
+    }
+
     public Vec2 scale (float amount) {
         return new math.Vec2(
                 this.x * amount,

@@ -33,7 +33,6 @@ public class Denoiser {
                     }
                 }
 
-
                 aveRed /= divisor;
                 aveGreen /= divisor;
                 aveBlue /= divisor;
@@ -47,8 +46,6 @@ public class Denoiser {
                 blue = (int) (aveBlue * (aveDifference / 255f) + blue * (1f - aveDifference / 255f));
 
                 copy.setRGB(j, i, (red << 16) | (green << 8) | blue);
-//                copy.setRGB(j, i, (aveDifference << 16) | (aveDifference << 8) | aveDifference);
-//                copy.setRGB(j, i, (red << 16) | (green << 8) | blue);
             }
         }
 

@@ -1,14 +1,21 @@
 package rendering;
 
+import materials.Material;
 import math.Vec3;
 import scene.Scene;
 import math.Ray;
+import scene.primitives.Primitive;
 
 import java.util.Random;
 
 public class Renderer {
     private float[] randomValues;
     int currRandom = 0;
+
+    private static final float SAMPLE_NORM = 0.2f / RenderingSettings.LIGHT_SAMPLES;
+    private static final float REFLECTIVITY = 0.04f;
+
+    public Material[] materials;
 
     public Scene scene;
 
@@ -17,19 +24,24 @@ public class Renderer {
 
         randomValues = new float[3000];
 
-        for (int i = 0; i < randomValues.length; i ++ ) {
+        for (int i = 0; i < randomValues.length; i ++ )
             randomValues[i] = random.nextFloat();
-        }
     }
 
-    public Renderer(Scene scene) {
+    public Renderer(Scene scene, Material[] materials) {
         generateRandomValues();
+        this.materials = materials;
 
         this.scene = scene;
     }
 
     public Renderer clone() {
-        return new Renderer(this.scene);
+        Material[] materialsCloned = new Material[materials.length];
+
+        for (int mIndex = 0; mIndex < materials.length; mIndex ++)
+            materialsCloned[mIndex] = materials[mIndex].clone();
+
+        return new Renderer(this.scene, materialsCloned);
     }
 
     public int mod(int x, int y) {
@@ -41,9 +53,9 @@ public class Renderer {
     }
 
     private Vec3 normal(Ray ray, float maxDistance) {
-        float d1 = scene.getMaxDistance(ray.position.add(new Vec3(-0.01f, 0, 0))) - maxDistance;
-        float d2 = scene.getMaxDistance(ray.position.add(new Vec3(0, -0.01f, 0))) - maxDistance;
-        float d3 = scene.getMaxDistance(ray.position.add(new Vec3(0, 0, -0.01f))) - maxDistance;
+        float d1 = scene.getMaxDistance(ray.position.add(new Vec3(-0.01f, 0, 0)), materials) - maxDistance;
+        float d2 = scene.getMaxDistance(ray.position.add(new Vec3(0, -0.01f, 0)), materials) - maxDistance;
+        float d3 = scene.getMaxDistance(ray.position.add(new Vec3(0, 0, -0.01f)), materials) - maxDistance;
 
         return new Vec3(d1, d2, d3).normalized();
     }
@@ -61,104 +73,104 @@ public class Renderer {
         Vec3 frag = new Vec3();
 
         for (int currIteration = 0; currIteration < RenderingSettings.ITERATIONS; currIteration ++) {
-//            ray.position = new Vec3(mod(ray.position.x, 8), mod(ray.position.y, 8), mod(ray.position.z, 8));
+//            ray.position = new Vec3(MathUtils.mod(ray.position.x, 10), MathUtils.mod(ray.position.y, 10), MathUtils.mod(ray.position.z, 10));
 
-            float maxDistance = scene.getMaxDistance(ray.position);
+            float maxDistance = scene.getMaxDistanceApprox(ray.position);
 
             if (maxDistance < RenderingSettings.COLLISION_THRESHOLD) {
+                maxDistance = scene.getMaxDistance(ray.position, materials);
+
+                if (maxDistance > RenderingSettings.COLLISION_THRESHOLD) {
+                    ray.position.addInPlace(ray.direction.scale(maxDistance));
+                    ray.distanceTravelled += maxDistance;
+
+                    continue;
+                }
+
                 float originalDistance = ray.distanceTravelled;
 
                 Vec3 normal = normal(ray, maxDistance);
 
                 Vec3 originalPos = ray.position;
 
-                for (int k = 0; k < scene.lights.size() * RenderingSettings.LIGHT_SAMPLES; k ++) {
-                    float distanceToLight;
+                Primitive source = scene.closestObject(ray.position);
 
-                    Vec3 lightColor;
-                    float lightIntensity;
+                for (int k = 0; k < scene.lights.length * RenderingSettings.LIGHT_SAMPLES; k ++) {
+                    float distanceToLight = originalPos.sub(scene.lights[k / RenderingSettings.LIGHT_SAMPLES].pos).length();
 
-                    distanceToLight = originalPos.sub(scene.lights.get(k / RenderingSettings.LIGHT_SAMPLES).pos).length();
+                    Vec3 lightColor = scene.lights[k / RenderingSettings.LIGHT_SAMPLES].color;
+                    float lightIntensity = scene.lights[k / RenderingSettings.LIGHT_SAMPLES].intensity;
 
-                    lightColor = scene.lights.get(k / RenderingSettings.LIGHT_SAMPLES).color;
-                    lightIntensity = scene.lights.get(k / RenderingSettings.LIGHT_SAMPLES).intensity;
+                    Vec3 randOffset = randomOffset(scene.lights[k / RenderingSettings.LIGHT_SAMPLES].radius);
 
-                    Vec3 randOffset = randomOffset(scene.lights.get(k / RenderingSettings.LIGHT_SAMPLES).radius);
-
-                    ray.direction = originalPos.sub(scene.lights.get(k / RenderingSettings.LIGHT_SAMPLES).pos.add(randOffset)).inverse();
-                    ray.position = originalPos.add(ray.direction.scale(0.5f));
+                    ray.direction = originalPos.sub(scene.lights[k / RenderingSettings.LIGHT_SAMPLES].pos.add(randOffset)).inverse();
+                    ray.position = originalPos.add(ray.direction.scale(0.03f));
 
                     ray.distanceTravelled = 0;
 
                     for (int j = 0; j < RenderingSettings.ITERATIONS * 1 * quality; j++) {
-//                    ray.position = new Vec3(mod(ray.position.x, 8), mod(ray.position.y, 8), mod(ray.position.z, 8));
-                        float maxDis = scene.getMaxDistance(ray.position);
+//                    ray.position = new Vec3(MathUtils.mod(ray.position.x, 10), MathUtils.mod(ray.position.y, 10), MathUtils.mod(ray.position.z, 10));
+                        float maxDis = scene.getMaxDistance(ray.position, materials);
 
-                        if (maxDis > distanceToLight - ray.distanceTravelled) {
+                        if (maxDis > distanceToLight - ray.distanceTravelled && scene.closestObject(ray.position) != source) {
+                            Primitive closest = scene.closestObject(originalPos);
+
+                            Material closestMat = materials[closest.getMaterial()];
+
                             frag = frag.add(
                                     lightColor
                                             .scale(lightIntensity)
                                             .scale(1f / distanceToLight / distanceToLight)
-                                            .scale(Math.max(0, normal.dot(ray.direction.inverse())))
+                                            .scale(Math.max(Material.ALBEDO, normal.dot(ray.direction.inverse())))
+                                            .scale(closestMat.sampleTexture(Material.ALBEDO, closest.getUV(originalPos)))
                             );
                             break;
                         }
 
-                        if (maxDis < RenderingSettings.COLLISION_THRESHOLD) {
-//                            ray.color = scene.world(ray.position.normalized());
-                            break;
-                        }
+                        if (maxDis < RenderingSettings.COLLISION_THRESHOLD && scene.closestObject(ray.position) != source) break;
+
                         if (ray.distanceTravelled > RenderingSettings.OUT_OF_BOUNDS) {
-                            ray.color = scene.world(ray.position.normalized()).scale(5);
+                            ray.color = scene.world(ray.position.normalized()).scaleInPlace(1);
                             break;
                         }
 
-                        ray.position = ray.position.add(
-                                ray.direction.scale(maxDis)
-                        );
-
+                        ray.position.addInPlace(ray.direction.scale(maxDis));
                         ray.distanceTravelled += maxDis;
                     }
                 }
 
-                frag = frag.scale(0.2f / RenderingSettings.LIGHT_SAMPLES);
-
-                float F0 = 0.04f;
+                frag.scaleInPlace(SAMPLE_NORM);
 
                 if(currBounce != -1) {
+                    Primitive closest = scene.closestObject(originalPos);
+                    Material closestMat = materials[closest.getMaterial()];
+
                     for (int k = 0; k < RenderingSettings.REFLECTION_SAMPLES * quality; k ++) {
                         Ray reflectionRay = new Ray();
 
-                        float fresnel = (float) (F0 + (1 - F0) * Math.pow(1 - viewDir.dot(normal), 5));
+                        float fresnel = (float) (REFLECTIVITY + (1 - REFLECTIVITY) * Math.pow(1 - viewDir.dot(normal), 5));
 
-                        Vec3 randOffset = randomOffset(RenderingSettings.ROUGHNESS);
+//                        Vec3 randOffset = randomOffset(0);
+                        Vec3 randOffset = randomOffset(closestMat.sampleTextureGrayscale(Material.ROUGHNESS, closest.getUV(originalPos)));
 
                         reflectionRay.direction = normal.inverse().add(randOffset).normalized();
-                        reflectionRay.position = originalPos.add(reflectionRay.direction);
+                        reflectionRay.position = originalPos.add(reflectionRay.direction).scaleInPlace(1f);
 
-                        Ray result = render(reflectionRay, currBounce - 1, quality);
-
-//                        frag = new Vec3(fresnel);
+                        Ray result = render(reflectionRay, currBounce - 1, quality * 0.8f);
 
                         frag = frag.add(
-                                result.color.scale(1f / RenderingSettings.REFLECTION_SAMPLES * quality * (1 + fresnel * 1f))
+                                result.color.scaleInPlace(1f / RenderingSettings.REFLECTION_SAMPLES * quality * (1f + fresnel))
+                                        .scaleInPlace(closestMat.sampleTexture(Material.ALBEDO, closest.getUV(originalPos)))
+//                                        .scaleInPlace(Math.min(1, 1f / (result.distanceTravelled) / (result.distanceTravelled)))
                         );
                     }
-
-                    frag.add(new Vec3(0.2f));
                 }
 
-                ray.color = new Vec3(
-                        Math.max(0, frag.x/2f),
-                        Math.max(0, frag.y/2f),
-                        Math.max(0, frag.z/2f)
-                );
+                ray.color = frag;
 
                 ray.distanceTravelled = originalDistance;
 
-                if (currBounce != RenderingSettings.BOUNCES - 1) {
-                    ray.color.scale(1f / ray.distanceTravelled / ray.distanceTravelled);
-                }
+//                ray.color.scaleInPlace(currBounce == RenderingSettings.BOUNCES - 1 ? 1 : 1f / ray.distanceTravelled / ray.distanceTravelled);
 
                 return ray;
             }
@@ -169,7 +181,7 @@ public class Renderer {
                 return ray;
             }
 
-            ray.position = ray.position.add(
+            ray.position.addInPlace(
                     ray.direction.scale(maxDistance)
             );
 

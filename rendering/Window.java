@@ -1,6 +1,7 @@
 package rendering;
 
 import input.Keyboard;
+import materials.textures.TextureRGB;
 import math.Ray;
 import math.Vec2;
 import math.Vec3;
@@ -13,6 +14,7 @@ import java.util.Random;
 public class Window extends JPanel {
     public boolean blocked = false;
     private boolean renderComplete = false;
+    private boolean currIterationDone = false;
 
     private Vec3 playerCam = new Vec3(2.3999996f, 2.5999997f, 0);
 
@@ -84,7 +86,7 @@ public class Window extends JPanel {
 
         if(blocked) FRAME = 1;
 
-        if (FRAME % (3000 / (17 - RenderingSettings.RESOLUTION_SCALING)) == 0 && RenderingSettings.RESOLUTION_SCALING != 1 && !blocked) {
+        if (currIterationDone && RenderingSettings.RESOLUTION_SCALING != 1 && !blocked) {
             FRAME = 0;
             RenderingSettings.RESOLUTION_SCALING /= 2;
 
@@ -114,7 +116,17 @@ public class Window extends JPanel {
                 int tileX = i % 6;
                 int tileY = i / 6;
 
-                threads[i] = new RenderThread(image, renderer.clone(), tileX * w / 6, tileY * h / 6, (tileX + 1) * w / 6, (tileY + 1) * h / 6, playerCam, h);
+                threads[i] = new RenderThread(
+                        new TextureRGB(image),
+                        image,
+                        renderer.clone(),
+                        tileX * w / 6,
+                        tileY * h / 6,
+                        (tileX + 1) * w / 6,
+                        (tileY + 1) * h / 6,
+                        playerCam,
+                        h
+                );
 
 //                threads[i] = new RenderThread(image, renderer, i * w / RenderingSettings.THREAD_COUNT, 0, (i + 1) * w / RenderingSettings.THREAD_COUNT, h, random, playerCam);
                 threads[i].start();
@@ -137,13 +149,17 @@ public class Window extends JPanel {
 
         if(!blocked) {
             boolean done = true;
+            currIterationDone = true;
 
             for (RenderThread thread : threads) {
                 if (thread != null && thread.isAlive()) {
                     done = false;
+                    currIterationDone = false;
                     break;
                 }
             }
+
+//            System.out.print(done ? "DONE!!!" : "");
 
             if (done && !renderComplete && RenderingSettings.RESOLUTION_SCALING == 1) {
                 //denoise
