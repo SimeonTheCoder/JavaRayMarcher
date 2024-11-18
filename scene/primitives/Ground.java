@@ -19,6 +19,13 @@ public class Ground implements Primitive {
         this.upside = upside;
     }
 
+    public Ground(float pos, boolean upside, int material) {
+        this.pos = pos;
+        this.upside = upside;
+
+        this.material = material;
+    }
+
     @Override
     public float distance(Vec3 point, float displacementTexture) {
 //        return (!upside ? point.y - pos : pos - point.y) - material.sampleTexture(1, getUV(point)).x * 2f + 1f;
@@ -40,5 +47,12 @@ public class Ground implements Primitive {
     public Vec2 getUV(Vec3 point) {
         return new Vec2(point.x / 20f, point.z / 20f);
 //        return new Vec2(MathUtils.mod(point.x, 1f), MathUtils.mod(point.z, 1f));
+    }
+
+    @Override
+    public Primitive clone() {
+        return new Ground (
+                this.pos, this.upside, this.material
+        );
     }
 }

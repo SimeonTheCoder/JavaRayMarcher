@@ -50,10 +50,27 @@ public class ImageUtils {
                 byte green = (byte) ((rgb >> 8) & 0xFF);
                 byte blue = (byte) (rgb & 0xFF);
 
-                clone[i][j] = blue;
+                clone[i][j] = (byte) ((red + green + blue) / 3);
             }
         }
 
         return clone;
+    }
+
+    public static BufferedImage stitch (BufferedImage[] tiles, int[] startX, int[] startY, int[] endX, int[] endY, int targetWidth, int targetHeight) {
+        BufferedImage result = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+
+        for (int currTile = 0; currTile < tiles.length; currTile ++) {
+            for (int i = startY[currTile]; i < endY[currTile]; i ++) {
+                for (int j = startX[currTile]; j < endX[currTile]; j ++) {
+                    int ox = j - startX[currTile];
+                    int oy = i - startY[currTile];
+
+                    result.setRGB( j, i, tiles[currTile].getRGB(ox, oy) );
+                }
+            }
+        }
+
+        return result;
     }
 }

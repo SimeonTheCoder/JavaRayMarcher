@@ -1,6 +1,8 @@
 package scene;
 
 import materials.Material;
+import materials.textures.Texture;
+import materials.textures.TextureRGB;
 import math.Light;
 import math.Vec2;
 import math.Vec3;
@@ -14,11 +16,33 @@ public class Scene {
     public Primitive[] objects;
     public Light[] lights;
 
-    public BufferedImage hdri;
+    public Texture hdri;
 
-    public Scene(Primitive[] objects, Light[] lights) {
+    public Scene(Primitive[] objects, Light[] lights, BufferedImage hdri) {
         this.objects = objects;
         this.lights = lights;
+
+        this.hdri = new TextureRGB(hdri);
+    }
+
+    public Scene(Primitive[] objects, Light[] lights, Texture hdri) {
+        this.objects = objects;
+        this.lights = lights;
+
+        this.hdri = hdri;
+    }
+
+    public Scene clone() {
+        Primitive[] objectCopy = new Primitive[objects.length];
+        Light[] lightsCopy = new Light[lights.length];
+
+        for (int i = 0; i < objects.length; i ++)
+            objectCopy[i] = objects[i].clone();
+
+        for (int i = 0; i < lights.length; i ++)
+            lightsCopy[i] = lights[i].clone();
+
+        return new Scene(objectCopy, lightsCopy, hdri);
     }
 
     float smin( float a, float b, float k )
@@ -128,11 +152,12 @@ public class Scene {
     public Vec3 world (Vec3 direction) {
         Vec2 uv = MathUtils.UVFromNormal(direction);
 
-        int rgb = hdri.getRGB((int) (uv.x * hdri.getWidth()), (int) (uv.y * hdri.getHeight()));
+        int x = (int) (uv.x * hdri.getWidth());
+        int y = (int) (uv.y * hdri.getHeight());
 
-        int red = (rgb >> 16) & 0xFF;
-        int green = (rgb >> 8) & 0xFF;
-        int blue = rgb & 0xFF;
+        int red = hdri.getRed(x, y);
+        int green = hdri.getGreen(x, y);
+        int blue = hdri.getBlue(x, y);
 
         Vec3 frag = new Vec3(red / 255f, green / 255f, blue / 255f);
 

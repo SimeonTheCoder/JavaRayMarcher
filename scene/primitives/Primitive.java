@@ -9,4 +9,6 @@ public interface Primitive {
     int getMaterial();
 
     Vec2 getUV(Vec3 point);
+
+    Primitive clone();
 }

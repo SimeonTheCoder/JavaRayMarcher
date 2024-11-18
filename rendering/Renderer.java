@@ -41,7 +41,7 @@ public class Renderer {
         for (int mIndex = 0; mIndex < materials.length; mIndex ++)
             materialsCloned[mIndex] = materials[mIndex].clone();
 
-        return new Renderer(this.scene, materialsCloned);
+        return new Renderer(this.scene.clone(), materialsCloned);
     }
 
     public int mod(int x, int y) {

@@ -36,16 +36,18 @@ public class Main {
         objects[20] = new Ground(0).setMaterial(1);
 
         Light[] lights = new Light[]{
-                new Light( new Vec3(20f, 5f, 10f), 400f, new Vec3(1, 0.5f, 0f), 2f ),
-                new Light( new Vec3(-3f, 4f, 10f), 50f, new Vec3(1, 0, 0), .5f ),
-                new Light( new Vec3(3f, 4f, 10f), 5f, new Vec3(0, 0, 1), .5f ),
-                new Light( new Vec3(0f, 3f, 12f), 5f, new Vec3(0, 1, 0), .5f ),
-                new Light( new Vec3(0f, 3f, 8f), 5f, new Vec3(1, 0, 1), .5f )
+//                new Light( new Vec3(20f, 5f, 10f), 400f, new Vec3(1, 0.5f, 0f), 2f ),
+//                new Light( new Vec3(-3f, 4f, 10f), 50f, new Vec3(1, 0, 0), .5f ),
+//                new Light( new Vec3(3f, 4f, 10f), 5f, new Vec3(0, 0, 1), .5f ),
+//                new Light( new Vec3(0f, 3f, 12f), 5f, new Vec3(0, 1, 0), .5f ),
+//                new Light( new Vec3(0f, 3f, 8f), 5f, new Vec3(1, 0, 1), .5f )
         };
 
         //Create scene
-        Scene scene = new Scene(objects, new Light[]{});
-        scene.hdri = ImageIO.read(new File("venice_sunset_4k.png"));
+        Scene scene = new Scene(
+                objects, lights,
+                ImageIO.read(new File("venice_sunset_4k.png"))
+        );
 
         Material[] materials = new Material[]{
                 MaterialFactory.create("brick/Bricks094"),

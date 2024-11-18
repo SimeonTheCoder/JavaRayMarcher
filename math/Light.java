@@ -12,4 +12,13 @@ public class Light {
         this.color = color;
         this.radius = radius;
     }
+
+    public Light clone () {
+        return new Light (
+            this.pos.clone(),
+            this.intensity,
+            this.color.clone(),
+            this.radius
+        );
+    }
 }
